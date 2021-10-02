@@ -1,0 +1,26 @@
+log:
+  level: debug
+
+server:
+  port: 8080
+  authentication:
+    type: static-token
+    static-token:
+      token: 123456
+    certificate:
+      ca-certificate-path: ""
+      server-certificate-path: ""
+      server-certificate-key-path: ""
+
+agent:
+  id: ABC
+  authentication:
+    type: static-token
+    static-token:
+      token: 123456
+    certificate:
+      ca-certificate-path: ""
+      agent-certificate-path: ""
+      agent-certificate-key-path: ""
+  server-endpoint: 127.0.0.1:8080
+  local-endpoint: 127.0.0.1:4523

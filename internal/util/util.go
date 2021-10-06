@@ -2,14 +2,12 @@ package util
 
 import (
 	"encoding/binary"
-	"io"
 	"net"
 	"strconv"
-	"sync"
-	"tunnel-transporter/message"
+	"tunnel-transporter/internal/signal"
 )
 
-func Dial(host string, port int) (*net.TCPConn, error) {
+func Dial(host string, port int) (net.Conn, error) {
 	addr, _ := net.ResolveTCPAddr("tcp", host+":"+strconv.Itoa(port))
 	conn, err := net.DialTCP("tcp", nil, addr)
 	if err != nil {
@@ -19,13 +17,13 @@ func Dial(host string, port int) (*net.TCPConn, error) {
 	return conn, err
 }
 
-func Listen(port int) (*net.TCPListener, error) {
+func Listen(port int) (net.Listener, error) {
 	addr, _ := net.ResolveTCPAddr("tcp", ":"+strconv.Itoa(port))
-	return net.ListenTCP("tcp", addr)
+	return net.Listen("tcp", addr.String())
 }
 
-func ListenOnRandomPort() (*net.TCPListener, error) {
-	return net.ListenTCP("tcp", nil)
+func ListenOnRandomPort() (net.Listener, error) {
+	return net.Listen("tcp", "")
 }
 
 func ResolveAddress(address string) (string, int) {
@@ -37,28 +35,7 @@ func ResolveAddress(address string) (string, int) {
 	return addr.IP.String(), addr.Port
 }
 
-func Join(to net.Conn, from net.Conn) {
-	var wait sync.WaitGroup
-
-	pipe := func(to net.Conn, from net.Conn) {
-		defer to.Close()
-		defer from.Close()
-		defer wait.Done()
-
-		if _, err := io.Copy(to, from); err != nil {
-			return
-		}
-	}
-
-	wait.Add(2)
-
-	go pipe(from, to)
-	go pipe(to, from)
-
-	wait.Wait()
-}
-
-func Read(conn net.Conn) (message.TypedMessage, error) {
+func Read(conn net.Conn) (signal.TypedSignal, error) {
 	var size int64
 	if err := binary.Read(conn, binary.LittleEndian, &size); err != nil {
 		return nil, err
@@ -69,7 +46,7 @@ func Read(conn net.Conn) (message.TypedMessage, error) {
 		return nil, err
 	}
 
-	msg, err := message.Unpack(buffer)
+	msg, err := signal.Unpack(buffer)
 	if err != nil {
 		return nil, err
 	}
@@ -77,8 +54,8 @@ func Read(conn net.Conn) (message.TypedMessage, error) {
 	return msg, nil
 }
 
-func Write(conn net.Conn, typedMessage message.TypedMessage) error {
-	buffer, err := message.Pack(typedMessage)
+func Write(conn net.Conn, typedMessage signal.TypedSignal) error {
+	buffer, err := signal.Pack(typedMessage)
 	if err != nil {
 		return err
 	}

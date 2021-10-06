@@ -1,17 +1,80 @@
-package log
+package config
 
 import (
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	"runtime"
 	"strconv"
 	"strings"
 )
 
+type (
+	AuthenticationType string
+)
+
+var (
+	AppConfig *Config
+)
+
+const (
+	None        AuthenticationType = "none"
+	StaticToken AuthenticationType = "static-token"
+)
+
 type Config struct {
-	Level string `yaml:"level"`
+	Log struct {
+		Level string
+	}
+	Server struct {
+		AgentPort uint16 `yaml:"agent-port"`
+		Http      struct {
+			Port             uint16
+			AgentIdHeaderKey string `yaml:"agent-id-header-key"`
+		}
+		Proxy struct {
+			Authentication struct {
+				Type AuthenticationType
+
+				StaticToken struct {
+					Token string
+				} `yaml:"static-token"`
+			}
+		}
+	}
+	Agent struct {
+		Id             string
+		ServerEndpoint string `yaml:"server-endpoint"`
+		LocalEndpoint  string `yaml:"local-endpoint"`
+		Proxy          struct {
+			Authentication struct {
+				Type AuthenticationType
+
+				StaticToken struct {
+					Token string
+				} `yaml:"static-token"`
+			}
+		}
+	}
 }
 
-func CreateLogger(logConfig *Config) {
+func ParseConfig(configPath string) error {
+	bytes, err := ioutil.ReadFile(configPath)
+	if err != nil {
+		return err
+	}
+
+	AppConfig = &Config{}
+	if err = yaml.Unmarshal(bytes, AppConfig); err != nil {
+		return err
+	}
+
+	createLogger(AppConfig)
+
+	return nil
+}
+
+func createLogger(config *Config) {
 	log.SetFormatter(&log.TextFormatter{
 		ForceColors:               true,
 		DisableColors:             false,
@@ -40,7 +103,7 @@ func CreateLogger(logConfig *Config) {
 	})
 	log.SetReportCaller(true)
 
-	switch logConfig.Level {
+	switch config.Log.Level {
 	case "trace":
 		log.SetLevel(log.TraceLevel)
 	case "debug":

@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"github.com/urfave/cli/v2"
 	"os"
-	"tunnel-transporter/client"
-	"tunnel-transporter/config"
+	"tunnel-transporter/cmd/agent"
+	"tunnel-transporter/cmd/server"
+	"tunnel-transporter/internal/config"
 )
 
 func main() {
@@ -31,7 +32,7 @@ func main() {
 					if err := config.ParseConfig(context.String("file")); err != nil {
 						return err
 					}
-					client.StartServer()
+					server.RunServer(context.Context)
 					return nil
 				},
 			},
@@ -44,7 +45,7 @@ func main() {
 					if err := config.ParseConfig(context.String("file")); err != nil {
 						return err
 					}
-					client.StartAgent()
+					agent.RunAgent()
 					return nil
 				},
 			},

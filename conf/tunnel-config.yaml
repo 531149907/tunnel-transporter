@@ -1,0 +1,25 @@
+log:
+  level: debug
+
+server:
+  agent-port: 8080
+  http:
+    port: 8081
+    agent-id-header-key: TT_AGENT_ID
+  proxy:
+    authentication:
+      enable: true
+      type: static-token
+      static-token:
+        token: 123456
+
+agent:
+  id: ABC
+  server-endpoint: 127.0.0.1:8080
+  local-endpoint: 127.0.0.1:4523
+  proxy:
+    authentication:
+      enable: true
+      type: static-token
+      static-token:
+        token: 123456
